@@ -1,0 +1,55 @@
+# Square Root of n (with fraction) using Binary Search
+
+Binary search on the answer over real numbers — narrow down [lo, hi] until
+the range is smaller than desired precision.
+
+## Fixed iteration count version (avoids precision-loop edge cases)
+
+    double sqrtBinarySearch(double n, int iterations = 100) {
+        double lo = 0, hi = max(1.0, n);
+        for (int i = 0; i < iterations; i++) {
+            double mid = (lo + hi) / 2;
+            if (mid * mid <= n) lo = mid;
+            else hi = mid;
+        }
+        return lo;
+    }
+100 iterations gives far more precision than double can even represent (converges way past 1e-15), so it's a safe default.
+
+Time complexity: O(log(range/precision)) ≈ O(log(1e18)) ≈ ~60 iterations for 1e-9 precision, or fixed O(iterations)
+N limit: n up to ~1e18 works fine (double precision starts losing accuracy above ~1e15-1e16 though — use long double for very large/high-precision needs)
+
+# Integer Square Root of n using Binary Search
+
+    long long sqrtBinarySearch(long long n) {
+        long long lo = 0, hi = n;
+        while (lo < hi) {
+            long long mid = lo + (hi - lo + 1) / 2;   // upper mid, avoids infinite loop
+            if (mid * mid <= n) lo = mid;
+            else hi = mid - 1;
+        }
+        return lo; // largest integer whose square <= n
+    }
+
+## Why upper mid (+1)
+Since we move lo = mid when condition holds, using lower mid can get stuck
+in an infinite loop (lo never advances past hi-1 in some cases). Upper mid
+avoids this.
+
+## Watch out for overflow
+mid * mid can overflow int for n close to 1e18 — always use long long, and
+if n itself can be up to 1e18, check mid > n / mid instead of mid*mid <= n
+to avoid overflow entirely:
+
+    long long sqrtBinarySearchSafe(long long n) {
+        long long lo = 0, hi = n;
+        while (lo < hi) {
+            long long mid = lo + (hi - lo + 1) / 2; // long long mid = (l + r) >> 1;
+            if (mid <= n / mid) lo = mid;   // equivalent to mid*mid <= n, overflow-safe
+            else hi = mid - 1;
+        }
+        return lo;
+    }
+
+Time complexity: O(log n)
+N limit: n up to ~1e18 safely with the overflow-safe version
